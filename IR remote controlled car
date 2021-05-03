@@ -1,0 +1,109 @@
+#include <IRremote.h>
+
+////////// Idendtfying IR REMOTE Buttons ////////// can be done using Serial Monitor and IR remote
+#define F 16736925  // FORWARD
+#define B 16754775  // BACK
+#define L 16720605  // LEFT
+#define R 16761405  // RIGHT
+#define S 16712445  // STOP
+/// Each Button on remote has two sets of code depedning on if you hold down the button or press it once ///
+#define UNKNOWN_F 5316027     // FORWARD
+#define UNKNOWN_B 2747854299  // BACK
+#define UNKNOWN_L 1386468383  // LEFT
+#define UNKNOWN_R 553536955   // RIGHT
+#define UNKNOWN_S 3622325019  // STOP
+
+#define RECV_PIN  12 // The IR Signal Reciever is located at Pin 12
+
+/// Defining Motors on L2998 Motor Driver/// (Motors are grouped by the side they are on
+#define Left_Output 5   // Left  wheels speed located at Pin 5
+#define Right_Output 6   // Right wheels speed located at Pin 6
+
+#define leftWheel_forward 7   // Left  wheels forward 
+#define leftWheel_backward 8   // Left  wheels reverse 
+#define rightWheel_backward 9   // Right wheels reverse 
+#define rightWheel_forward 11  // Right wheel forward 
+#define carSpeed 250  // initial speed of car >=0 to <=255
+
+IRrecv irrecv(RECV_PIN); 
+decode_results results; // Results from IR sensor are assigned to a variable called results
+unsigned long val;
+unsigned long preMillis;
+
+void setup() {
+  pinMode(leftWheel_forward,OUTPUT);
+  pinMode(leftWheel_backward,OUTPUT);
+  pinMode(rightWheel_backward,OUTPUT);
+  pinMode(rightWheel_forward,OUTPUT);
+  pinMode(Left_Output,OUTPUT);
+  pinMode(Right_Output,OUTPUT);
+  stop();
+  irrecv.enableIRIn();  
+}
+
+// Creating Variables/Scenario //
+void loop() {
+  if (irrecv.decode(&results)){ 
+    preMillis = millis(); // Time between recieivng codes in miliseconds
+    val = results.value;
+    irrecv.resume();
+    switch(val){
+      case F: 
+      case UNKNOWN_F: forward(); break;   // If the UNKNOWN_F or F signal is recevied run the code under the name forward
+      case B: 
+      case UNKNOWN_B: back(); break;     // If the UNKNOWN_B or B signal is recevied run the code under the name back
+      case L: 
+      case UNKNOWN_L: left(); break;     // If the UNKNOWN_L or L signal is recevied run the code under the name left
+      case R: 
+      case UNKNOWN_R: right();break;     // If the UNKNOWN_R or R signal is recevied run the code under the name forward
+      case S: 
+      case UNKNOWN_S: stop(); break;     // If the UNKNOWN_S or S signal is recevied run the code under the name forward
+      default: break;
+    }
+  }
+  else{
+    if(millis() - preMillis > 500){
+      stop();
+      preMillis = millis();
+    }
+  }
+} 
+
+ void forward(){ 
+  digitalWrite(Left_Output,HIGH);
+  digitalWrite(Right_Output,HIGH);
+  digitalWrite(leftWheel_forward,HIGH);
+  digitalWrite(leftWheel_backward,LOW);
+  digitalWrite(rightWheel_backward,LOW);
+  digitalWrite(rightWheel_forward,HIGH);
+}
+void back(){
+  digitalWrite(Left_Output,HIGH);
+  digitalWrite(Right_Output,HIGH);
+  digitalWrite(leftWheel_forward,LOW);
+  digitalWrite(leftWheel_backward,HIGH);
+  digitalWrite(rightWheel_backward,HIGH);
+  digitalWrite(rightWheel_forward,LOW);
+}
+void left(){
+  analogWrite(Left_Output,carSpeed);
+  analogWrite(Right_Output,carSpeed);
+  digitalWrite(leftWheel_forward,LOW);
+  digitalWrite(leftWheel_backward,HIGH);
+  digitalWrite(rightWheel_backward,LOW);
+  digitalWrite(rightWheel_forward,HIGH); 
+}
+void right(){
+  analogWrite(Left_Output,carSpeed);
+  analogWrite(Right_Output,carSpeed);
+  digitalWrite(leftWheel_forward,HIGH);
+  digitalWrite(leftWheel_backward,LOW);
+  digitalWrite(rightWheel_backward,HIGH);
+  digitalWrite(rightWheel_forward,LOW);
+}
+void stop(){
+  digitalWrite(Left_Output, LOW);
+  digitalWrite(Right_Output, LOW);
+}
+
+
